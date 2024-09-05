@@ -9,17 +9,36 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import axios from "axios";
 import React, { useState } from "react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 
 function SignUp() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // Implement login logic here
-    console.log({ email, password });
+  const handleSignUp = async () => {
+    setError(null);
+    try {
+      const response = await axios.post("http://localhost:3000/api/v1/signup", {
+        username,
+        email,
+        password,
+      });
+
+      if (response.status === 201) {
+        console.log("Account created successfully:", response.data);
+        navigate("/SignIn");
+      } else {
+        setError(response.data.message || "An error occurred during signup.");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "An error occurred during signup.");
+    }
   };
 
   return (
@@ -48,7 +67,7 @@ function SignUp() {
               Sign Up
             </Typography>
             <Box component="form" noValidate sx={{ mt: 1 }}>
-            <TextField
+              <TextField
                 margin="normal"
                 required
                 fullWidth
@@ -84,21 +103,26 @@ function SignUp() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {error && (
+                <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                  {error}
+                </Typography>
+              )}
               <Button
                 type="button"
                 fullWidth
                 variant="contained"
                 color="primary"
                 sx={{ mt: 3, mb: 2 }}
-                onClick={handleLogin}
+                onClick={handleSignUp}
               >
-                Sign In
+                Sign Up
               </Button>
               <Grid container>
                 <Grid item>
                   <Typography variant="body2">
                     {"Already have an account? "}
-                    <Link to="/">Sign In</Link>
+                    <Link to="/SignIn">Sign In</Link>
                   </Typography>
                 </Grid>
               </Grid>

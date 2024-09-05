@@ -9,16 +9,34 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import axios from "axios";
 import React, { useState } from "react";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 
 function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // Implement login logic here
-    console.log({ email, password });
+  const handleLogin = async () => {
+    setError(null);
+    try {
+      const response = await axios.post("http://localhost:3000/api/v1/signin", {
+        email,
+        password,
+      });
+
+      if (response.status === 200) {
+        const { id } = response.data;
+        localStorage.setItem("userId", id);
+        console.log("Login successful, user ID stored:", id);
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Error during sign-in:", err);
+      setError(err.response?.data?.message || "An error occurred during sign-in.");
+    }
   };
 
   return (
@@ -29,7 +47,7 @@ function SignIn() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          height: "100vh", // Center vertically and horizontally
+          height: "100vh",
         }}
       >
         <Paper elevation={3} sx={{ padding: 4, width: "100%" }}>
@@ -71,6 +89,11 @@ function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {error && (
+                <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                  {error}
+                </Typography>
+              )}
               <Button
                 type="button"
                 fullWidth

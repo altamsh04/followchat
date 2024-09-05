@@ -1,7 +1,7 @@
 // require('dotenv').config();
-import express, { json, urlencoded } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import express, { json, urlencoded } from 'express';
 import connectDB from './db/db.js';
 import authenticateToken from './middleware/auth.middleware.js';
 import usersRouter from './routes/user.routes.js';

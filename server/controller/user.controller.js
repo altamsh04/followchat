@@ -47,4 +47,15 @@ const users = async function (req, res) {
   }
 };
 
-export default { signup, signin, users};
+const usersid = async function (req, res) {
+  try {
+    let {id}= req.params;
+    const dbUsers = await User.findById(id).select("-password").exec();
+    return res.status(200).json(dbUsers);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export default { signup, signin, users,usersid};

@@ -1,8 +1,8 @@
 import User from "../db/user.js";
 const signup = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
-    const newUser = new User({ username, email, password });
+    const { username, email,image, password } = req.body;
+    const newUser = new User({ username, email,image, password });
     await newUser.save();
     res.status(201).json({ message: "SignUp Successful" });
   } catch (error) {

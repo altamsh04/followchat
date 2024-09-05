@@ -6,7 +6,7 @@ import React from 'react';
 const RightPanel = ({ selectedChat }) => (
   <Box
     sx={{
-      width: { xs: '100%', md: '70%' },
+      width: { xs: '100%', md: '100%' },
       display: selectedChat ? 'block' : 'none',
       height: '100vh',
       backgroundColor: '#1a1a1a',

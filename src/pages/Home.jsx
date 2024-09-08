@@ -1,24 +1,69 @@
-import { Box, Container } from '@mui/material';
-import React, { useState } from 'react';
+import { Box, CircularProgress, Container, Typography } from '@mui/material';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import BottomIcons from '../components/BottomIcons';
-import ChatList from '../components/ChatList';
-import FollowTabs from '../components/FollowTabs';
 import Header from '../components/Header';
-import ProfileSection from '../components/ProfileSection'; // Import ProfileSection component
 import RightPanel from '../components/RightPanel';
 import Search from '../components/Search';
-
-const chats = [
-  { name: 'John Doe', message: 'Hey, how are you?', time: '10:30 AM' },
-  { name: 'Jane Smith', message: 'Meeting at 3 PM', time: '9:00 AM' },
-  { name: 'Michael', message: 'See you tomorrow!', time: 'Yesterday' },
-];
+import ChatList from './ChatList';
+import FollowTabs from './FollowTabs';
+import ProfileSection from './ProfileSection'; // Import ProfileSection component
 
 function Home() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [showFollowSection, setShowFollowSection] = useState(false);
   const [showProfileSection, setShowProfileSection] = useState(false); // State for profile section
   const [activeTab, setActiveTab] = useState(0);
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true); // Add loading state
+  const [error, setError] = useState(null); // Add error state
+  
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          throw new Error("User ID not found in localStorage");
+        }
+
+        // Fetch the current user's friends
+        const userResponse = await axios.get(`http://localhost:3000/api/v1/users/${userId}`);
+        const friends = userResponse.data.friends;
+
+        // Filter mutual friends where both users follow and accepted each other
+        const mutualFriends = friends.filter(friend => 
+          friend.followed && friend.accepted &&
+          userResponse.data.friends.some(f => f.friendId === friend.friendId && f.followed && f.accepted)
+        );
+
+        const chatListPromises = mutualFriends.map(async (friend) => {
+          // Fetch friend's profile and chat data by friendId
+          const friendResponse = await axios.get(`http://localhost:3000/api/v1/users/${friend.friendId}`);
+          const friendProfile = friendResponse.data;
+
+          return {
+            name: friendProfile.username,
+            email: friendProfile.email,
+            image: friendProfile.image || 'default-image-url', // Set a default image if none
+            message: friend.chats.length > 0 ? friend.chats[friend.chats.length - 1].message : 'No recent messages',
+            time: friend.chats.length > 0 ? friend.chats[friend.chats.length - 1].time : 'N/A',
+            friendId: friendProfile._id,
+          };
+        });
+
+        // Resolve all chatList promises
+        const chatList = await Promise.all(chatListPromises);
+        setChats(chatList);
+      } catch (err) {
+        setError(err.message || 'Error fetching chats');
+        console.error('Error fetching chats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChats();
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -52,7 +97,15 @@ function Home() {
           setShowProfileSection={setShowProfileSection} // Pass state handler for profile section
         />
 
-        {showProfileSection ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Typography color="error" align="center">
+            {error}
+          </Typography>
+        ) : showProfileSection ? (
           <ProfileSection /> // Display the profile section
         ) : showFollowSection ? (
           <FollowTabs activeTab={activeTab} handleTabChange={handleTabChange} />
